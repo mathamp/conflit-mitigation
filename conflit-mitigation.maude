@@ -1,0 +1,136 @@
+fmod SENSOR is
+    protecting INT .
+    protecting STRING .
+
+    sorts Conditional Condition Event SensorRule .
+    subsort String < Event .
+
+
+    op Eq : -> Condition [ctor] .
+    op Neq : -> Condition [ctor] .
+    op Gr : -> Condition [ctor] .
+    op Le : -> Condition [ctor] .
+    op GrEq : -> Condition [ctor] .
+    op LeEq : -> Condition [ctor] .
+
+    op __ : Condition Int -> Conditional .
+    op _,_ : Conditional Event -> SensorRule .
+endfm
+
+view Event from TRIV to SENSOR is 
+    sort Elt to Event .
+endv
+
+view SensorRule from TRIV to SENSOR is
+    sort Elt to SensorRule .
+endv
+
+fmod ACTUATOR is
+    protecting INT .
+    protecting STRING .
+
+    protecting SENSOR .
+
+    sorts Action BinaryAction BinaryValue DiscreteAction DiscreteValue Time ActuatorRule .
+    subsort Int < DiscreteValue .
+
+    op Set : -> BinaryAction [ctor] .
+    op On : -> BinaryValue [ctor] .
+    op Off : -> BinaryValue [ctor] .
+
+    op Set : -> DiscreteAction [ctor] .
+    op Increase : -> DiscreteAction [ctor] .
+    op Decrease : -> DiscreteAction [ctor] .
+
+
+    op ___ : Int BinaryAction BinaryValue -> Action .
+    op ___ : Int DiscreteAction DiscreteValue -> Action .
+
+    op _,_ : Event Action -> ActuatorRule .
+endfm
+
+view Action from TRIV to ACTUATOR is
+    sort Elt to Action .
+endv
+
+view ActuatorRule from TRIV to ACTUATOR is
+    sort Elt to ActuatorRule .
+endv
+
+fmod CONTROLLER is
+    protecting INT .
+    protecting STRING .
+
+    protecting ACTUATOR .
+
+    sorts ControllerRule .
+
+    op _,_ : Action Int -> ControllerRule .
+endfm
+
+view ControllerRule from TRIV to CONTROLLER is
+    sort Elt to ControllerRule .
+endv
+
+omod DEVICE is
+    protecting INT .
+    protecting STRING .
+
+    protecting SENSOR .
+    protecting ACTUATOR .
+    protecting CONTROLLER .
+
+    protecting LIST{ControllerRule} .
+    protecting LIST{ActuatorRule} .
+    protecting LIST{SensorRule} .
+    protecting LIST{Event} .
+    protecting LIST{Action} . 
+    protecting LIST{Int} .
+
+    class Device | id : Int .
+    
+    class Sensor | variableName : String, variableValue : Int, rules : List{SensorRule}, links : List{Int} .
+    class Actuator | rules : List{ActuatorRule}, receivedEvents : List{Event}, links : List{Int} .
+    class Controller | rules : List{ControllerRule}, receivedActions : List{Action} .
+
+    subclass Sensor < Device .
+    subclass Actuator < Device .
+    subclass Controller < Device .
+
+    msg sendEvent : Oid String -> Msg .
+    msg sendAction : Oid Action -> Msg .
+endom
+
+parse 
+    (Gr 25, "TemperaturaQuente") 
+    (Eq 20, "TemperaturaIdeal") 
+    (Le 15, "TemperaturaFria") .
+parse 
+    (Le 6, "LuminosidadeEscura") 
+    (Gr 8, "LuminosidadeOk") .
+parse 
+    (Eq 0, "HorarioMadrugada") 
+    (Eq 6, "HorarioManha") .
+
+parse 
+    ("TemperaturaQuente", 100 Set On) 
+    ("TemperaturaIdeal", 100 Set Off) 
+    ("TemperaturaIdeal", 101 Set Off) 
+    ("TemperaturaFria", 101 Set On) .
+parse 
+    ("LuminosidadeEscura", 200 Set On ) 
+    ("LuminosidadeOk", 200 Set Off)
+    ("HorarioMadrugada", 201 Set Off)
+    ("HorarioManha", 201 Set On) .
+
+parse 
+    (100 Set On, 100)
+    (100 Set Off, 100)
+    (101 Set On, 101)
+    (101 Set Off, 101) .
+
+parse 
+    (200 Set On, 200)
+    (200 Set Off, 200)
+    (201 Set On, 201)
+    (201 Set Off, 201) .
