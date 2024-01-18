@@ -136,6 +136,7 @@ mod SIMULATION is
 
     --- Detecção de conflitos
     --- Quando surgem 2 eventos ou ações conflitantes, emite o sinal correspondente.
+    --- Quando a rede viola as regras do ambiente (A temperatura atingir 30ºC ou 10ºC)
 
 
     crl [event-conflit] :
@@ -154,6 +155,22 @@ mod SIMULATION is
         < "Action Conflict" : Conflict | reason : "2 actions are conflicting" > .
 
     
+    
+    crl [temperature-rule-conflit1] :
+        C
+        < "Temperature" : AmbientVariable | val : I1 >
+    =>
+        < "Ambient Rule Conflit" : Conflict | reason : "Temperature reached 30C" >
+    if 30 <= I1  .
+
+    crl [temperature-rule-conflit2] :
+        C
+        < "Temperature" : AmbientVariable | val : I1 >
+    =>
+        < "Ambient Rule Conflit" : Conflict | reason : "Temperature reached 10C" >
+    if I1 <= 10 .
+
+    
     --- Passagem de tempo
     --- Passa o tempo
 
@@ -168,7 +185,7 @@ mod SIMULATION is
 endm
 
 rew [300]
-    < "Time" : AmbientVariable | val : 5 >
-    < "Temperature" : AmbientVariable | val : 5 >
+    < "Time" : AmbientVariable | val : 11 >
+    < "Temperature" : AmbientVariable | val : 11 >
     < "TemperatureSensor" : Sensor | currentEvent : None, channel : 1 >
     < "TemperatureActuator" : Actuator | currentAction : None, channel : 1 > .
