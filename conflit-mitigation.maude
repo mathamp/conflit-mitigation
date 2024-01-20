@@ -3,189 +3,146 @@ fmod EVENT is
 
     sorts Event .
     subsorts String < Event .
+
+    op none : -> Event .
 endfm
+
+view Event from TRIV to EVENT is
+    sort Elt to Event .
+endv
 
 fmod ACTION is
     protecting STRING .
 
     sorts Action .
-    
+
     op _On : String -> Action [ctor] .
     op _Off : String -> Action [ctor] .
+    op none : -> Action .
+
+    vars S : String .
+
+    op opposite : Action -> Action .
+    eq opposite(S On) = S Off .
+    eq opposite(S Off) = S On .
+    eq opposite(none) = none .
+
 endfm
 
-omod DEVICE is
+view Action from TRIV to ACTION is
+    sort Elt to Action .
+endv
+
+fmod VARIABLE is
+    protecting INT .
+    protecting BOOL .
+    protecting STRING .
+
+    sorts Variable AmbientVariable ControllableVariable .
+    subsorts AmbientVariable ControllableVariable < Variable .
+
+    sorts State .
+    op on : -> State [ctor] .
+    op off : -> State [ctor] .
+
+    op AV_is_ : String Int -> AmbientVariable .
+    op CV_is_ : String State -> ControllableVariable .
+endfm
+
+view Variable from TRIV to VARIABLE is
+    sort Elt to Variable .
+endv
+
+fmod VARIABLE-SET is
+    protecting SET{Variable} .
+
+    vars V : Variable .
+    vars E : Set{Variable} .
+    vars I : Int .
+    vars Str : String .
+    vars St : State .
+
+    op _contains_ : Set{Variable} String -> Bool .
+    eq (AV Str is I, E) contains Str = true .
+    eq (CV Str is St, E) contains Str = true .
+    eq E contains Str = false [owise] .
+endfm
+
+fmod DEVICE is
+    protecting INT .
+    protecting SET{Nat} .
+    protecting STRING .
+
     protecting EVENT .
     protecting ACTION .
-    protecting INT .
-    protecting STRING .
+    protecting SET{Event} .
+    protecting SET{Action} .
 
-    sorts Option .
-    subsorts Option < Event Action .
-    subsorts String < Oid .
+    sorts Device Sensor Actuator .
+    subsorts Sensor Actuator < Device .
 
-    op None : -> Option [ctor] .
+    op Sensor_|`event:_,channels:_ : String Event Set{Nat} -> Sensor .
+    op Actuator_|`action:_,channels:_ : String Action Set{Nat} -> Sensor .
+endfm
 
-    class AmbientVariable | val : Int .
-    class Sensor | currentEvent : Event, channel : Nat .
-    class Actuator | currentAction : Action, channel : Nat .
+view Device from TRIV to DEVICE is
+    sort Elt to Device .
+endv
 
-    class Conflict | reason : String .
+fmod DEVICE-SET is
+    protecting SET{Device} .
+endfm
 
-    class EventLog | event : Event, timestamp : Nat .
-    class ActionLog | action : Action, timestamp : Nat .
-endom
+fmod LOG is
+    protecting NAT .
+    protecting EVENT .
+    protecting ACTION .
 
-mod SIMULATION is
+    sorts Log EventLog ActionLog .
+    subsorts EventLog ActionLog < Log .
+
+    op Event_at_ : Event Nat -> EventLog .
+    op Action_at_ : Action Nat -> ActionLog .
+endfm
+
+view Log from TRIV to LOG is
+    sort Elt to Log .
+endv
+
+fmod LOG-SET is
+    protecting SET{Log} .
+
+    vars S : Set{Log}.
+    vars L : Log .
+    vars E : Event .
+    vars A : Action .
+    vars N : Nat .
+
+    op hasEvent___ : Set{Log} Event Nat -> Bool .
+    op hasAction___ : Set{Log} Action Nat -> Bool . 
+
+    eq hasEvent (Event E at N, S) E N = true .
+    eq hasEvent S E N = false [owise] .
+
+    eq hasAction (Action A at N, S) A N = true .
+    eq hasAction S A N = false [owise] .
+endfm
+
+fmod AMBIENT is
+    protecting VARIABLE .
+    protecting VARIABLE-SET .
     protecting DEVICE .
-    protecting STRING .
+    protecting DEVICE-SET .
+    protecting LOG .
+    protecting LOG-SET .
 
-    vars I1 I2 I3 I4 : Int .
-    vars N1 N2 N3 N4 : Nat .
-    vars O1 O2 O3 O4 : Oid .
-    vars S1 S2 S3 S4 : String .
-    vars E1 E2 E3 E4 : Event .
-    vars A1 A2 A3 A4 : Action .
-    vars C : Configuration .
+    sorts Variables Devices Logs Conflict Ambient .
+    subsorts Conflict < Ambient .
 
+    op Vars{_} : Set{Variable} -> Variables [ctor] .
+    op Devs{_} : Set{Device} -> Devices [ctor] .
+    op Logs{_} : Set{Log} -> Logs [ctor] .
 
-    --- Regras dos sensores
-    --- Levantam eventos quando a variável observada ("Temperatura") atinge o limiar desejado.
-
-
-    crl [temperature-hot] :
-        < "Time" : AmbientVariable | val : N1 >
-        < "Temperature" : AmbientVariable | val : I1 >
-        < "TemperatureSensor" : Sensor | currentEvent : E1, channel : N2 >
-    =>
-        < "Time" : AmbientVariable | val : N1 >
-        < "Temperature" : AmbientVariable | val : I1 >
-        < "TemperatureSensor" : Sensor | currentEvent : "Temperature Hot", channel : N2 >
-        < "TemperatureLog" : EventLog | event : "Temperature Hot", timestamp : N1 >
-    if 25 <= I1 and not (E1 == "Temperature Hot") .
-
-    crl [temperature-ok] :
-        < "Time" : AmbientVariable | val : N1 >
-        < "Temperature" : AmbientVariable | val : I1 >
-        < "TemperatureSensor" : Sensor | currentEvent : E1, channel : N2 >
-    =>
-        < "Time" : AmbientVariable | val : N1 >
-        < "Temperature" : AmbientVariable | val : I1 >
-        < "TemperatureSensor" : Sensor | currentEvent : "Temperature Ok", channel : N2 >
-        < "TemperatureLog" : EventLog | event : "Temperature Ok", timestamp : N1 >
-    if I1 == 20 and not (E1 == "Temperature Ok") .
-
-    crl [temperature-cold] :
-        < "Time" : AmbientVariable | val : N1 >
-        < "Temperature" : AmbientVariable | val : I1 >
-        < "TemperatureSensor" : Sensor | currentEvent : E1, channel : N2 >
-    =>
-        < "Time" : AmbientVariable | val : N1 >
-        < "Temperature" : AmbientVariable | val : I1 >
-        < "TemperatureSensor" : Sensor | currentEvent : "Temperature Cold", channel : N2 >
-        < "TemperatureLog" : EventLog | event : "Temperature Cold", timestamp : N1 >
-    if (I1 <= 15 ) and not (E1 == "Temperature Cold") .
-
-
-    --- Regras dos atuadores
-    --- Emitem ações ao receberem eventos dos sensores.
-
-
-    crl [air-conditioner-on] :
-        < "Time" : AmbientVariable | val : N1 >
-        < "TemperatureSensor" : Sensor | currentEvent : "Temperature Hot", channel : N2 >
-        < "TemperatureActuator" : Actuator | currentAction : A1, channel : N2 >
-    =>
-        < "Time" : AmbientVariable | val : N1 >
-        < "TemperatureSensor" : Sensor | currentEvent : "Temperature Hot", channel : N2 >
-        < "TemperatureActuator" : Actuator | currentAction : "Air Conditioner" On, channel : N2 >
-        < "AirConditionerLog" : ActionLog | action : "Air Conditioner" On, timestamp : N1 >
-    if not (A1 == "Air Conditioner" On) .
-
-    rl [air-conditioner-off] :
-        < "Time" : AmbientVariable | val : N1 >
-        < "TemperatureSensor" : Sensor | currentEvent : "Temperature Ok", channel : N2 >
-        < "TemperatureActuator" : Actuator | currentAction : "Air Conditioner" On, channel : N2 >
-    =>
-        < "Time" : AmbientVariable | val : N1 >
-        < "TemperatureSensor" : Sensor | currentEvent : "Temperature Ok", channel : N2 >
-        < "TemperatureActuator" : Actuator | currentAction : "Air Conditioner" Off, channel : N2 >
-        < "AirConditionerLog" : ActionLog | action : "Air Conditioner" Off, timestamp : N1 > .
-
-    rl [heater-off] :
-        < "Time" : AmbientVariable | val : N1 >
-        < "TemperatureSensor" : Sensor | currentEvent : "Temperature Ok", channel : N2 >
-        < "TemperatureActuator" : Actuator | currentAction : "Heater" On, channel : N2 >
-    =>
-        < "Time" : AmbientVariable | val : N1 >
-        < "TemperatureSensor" : Sensor | currentEvent : "Temperature Ok", channel : N2 >
-        < "TemperatureActuator" : Actuator | currentAction : "Heater" Off, channel : N2 >
-        < "HeaterLog" : ActionLog | action : "Heater" Off, timestamp : N1 > .
-
-    crl [heater-on] :
-        < "Time" : AmbientVariable | val : N1 >
-        < "TemperatureSensor" : Sensor | currentEvent : "Temperature Cold", channel : N2 >
-        < "TemperatureActuator" : Actuator | currentAction : A1, channel : N2 >
-    =>
-        < "Time" : AmbientVariable | val : N1 >
-        < "TemperatureSensor" : Sensor | currentEvent : "Temperature Cold", channel : N2 >
-        < "TemperatureActuator" : Actuator | currentAction : "Heater" On, channel : N2 >
-        < "HeaterLog" : ActionLog | action : "Heater" On, timestamp : N1 >
-    if not (A1 == "Heater" On) .
-
-
-    --- Detecção de conflitos
-    --- Quando surgem 2 eventos ou ações conflitantes, emite o sinal correspondente.
-    --- Quando a rede viola as regras do ambiente (A temperatura atingir 30ºC ou 10ºC)
-
-
-    crl [event-conflit] :
-        C
-        < S1 : EventLog | event : S2, timestamp : N1 >
-        < S1 : EventLog | event : S3, timestamp : N1 >
-    =>
-        < "Event Conflict" : Conflict | reason : "2 events are conflicting" >
-    if not (S2 == S3) .
-
-    rl [action-conflit] :
-        C
-        < S1 : ActionLog | action : S2 On, timestamp : N1 >
-        < S1 : ActionLog | action : S2 Off, timestamp : N1 >
-    =>
-        < "Action Conflict" : Conflict | reason : "2 actions are conflicting" > .
-
-    
-    
-    crl [temperature-rule-conflit1] :
-        C
-        < "Temperature" : AmbientVariable | val : I1 >
-    =>
-        < "Ambient Rule Conflit" : Conflict | reason : "Temperature reached 30C" >
-    if 30 <= I1  .
-
-    crl [temperature-rule-conflit2] :
-        C
-        < "Temperature" : AmbientVariable | val : I1 >
-    =>
-        < "Ambient Rule Conflit" : Conflict | reason : "Temperature reached 10C" >
-    if I1 <= 10 .
-
-    
-    --- Passagem de tempo
-    --- Passa o tempo
-
-    
-    rl [pass-time] :
-        < "Time" : AmbientVariable | val : N1 >
-        < "Temperature" : AmbientVariable | val : N2 >
-    =>
-        < "Time" : AmbientVariable | val : N1 + 1 >
-        < "Temperature" : AmbientVariable | val : N2 + 1 > .
-
-endm
-
-rew [300]
-    < "Time" : AmbientVariable | val : 11 >
-    < "Temperature" : AmbientVariable | val : 11 >
-    < "TemperatureSensor" : Sensor | currentEvent : None, channel : 1 >
-    < "TemperatureActuator" : Actuator | currentAction : None, channel : 1 > .
+    op ___ : Variables Devices Logs -> Ambient [ctor] .
+    op Conflict_ : String -> Conflict [ctor] .
+endfm
