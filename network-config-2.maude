@@ -1,0 +1,182 @@
+fmod CONFIG-HELPER is
+    protecting AMBIENT .
+    protecting FLOAT .
+    protecting CONVERSION .
+
+    vars S1 S2 S3 S4 S5 : String .
+    vars I1 I2 I3 I4 I5 : Int .
+    vars N1 N2 N3 N4 N5 : Nat .
+    vars E1 E2 E3 E4 E5 : Event .
+    vars A1 A2 A3 A4 A5 : Action .
+    vars St1 St2 St3 St4 St5 : State .
+
+    vars Ch1 Ch2 Ch3 Ch4 Ch5 : Nat .
+    vars ChSet1 ChSet2 : Set{Nat} .
+
+    var VarSet : Set{Variable} .
+    var DevSet : Set{Device} .
+    var LogSet : Set{Log} .
+
+    op newTemp : Int Nat State State -> Int .
+    eq newTemp(I1, N1, off, off) = moveTowards(I1, tempAt(N1)) .
+    eq newTemp(I1, N1, on, on) = moveTowards(I1, tempAt(N1)) .
+    eq newTemp(I1, N1, on, off) = I1 - 1 .
+    eq newTemp(I1, N1, off, on) = I1 + 1 .
+
+    op tempAt : Int -> Int .
+    eq tempAt(N1) = floor(rat(floor(10.0 * sin((float(N1) - 6.0) * pi / 12.0)) + 20.0)) .
+
+    op lightAt : Int -> Int .
+    eq lightAt(N1) = floor(rat(floor(7.5 * sin((float(N1) - 6.0) * pi / 12.0)) + 7.5)) .
+
+    op moveTowards : Int Int -> Int .
+    eq moveTowards(N1,N1) = N1 .
+    eq moveTowards(N1,N2) = if (N1 > N2) then (N1 - 1) else (N1 + 1) fi .
+
+    op hasConflict : Set{Log} -> Bool .
+    eq hasConflict((Action S1 On at N1, Action S1 Off at N1, LogSet)) = true .
+    eq hasConflict(LogSet) = false [owise] .
+endfm
+
+mod CONFIG is
+    protecting AMBIENT .
+    protecting CONFIG-HELPER .
+
+    vars S1 S2 S3 S4 S5 : String .
+    vars I1 I2 I3 I4 I5 : Int .
+    vars N1 N2 N3 N4 N5 : Nat .
+    vars E1 E2 E3 E4 E5 : Event .
+    vars A1 A2 A3 A4 A5 : Action .
+    vars St1 St2 St3 St4 St5 : State .
+
+    vars Ch1 Ch2 Ch3 Ch4 Ch5 : Nat .
+    vars ChSet1 ChSet2 : Set{Nat} .
+
+    var VarSet : Set{Variable} .
+    var DevSet : Set{Device} .
+    var LogSet : Set{Log} .
+
+    op hasPendingAction : Set{Variable} -> Bool .
+    eq hasPendingAction(VarSet) = false .
+
+    --- Ambient rules violations
+
+    crl [temp-violation] :
+        Vars { AV "Temperature" is I1, VarSet }
+        Devs { DevSet } Logs { LogSet }
+    =>
+        Conflict ("Temperature has reached " + (string(I1, 10)) + "C")
+    if not (12 < I1 and I1 < 28) .
+
+    crl [light-violation] :
+        Vars { AV "Luminosity" is I1, AV "Hour" is N1, VarSet }
+        Devs { DevSet } Logs { LogSet }
+    =>
+        Conflict "The room is too dark"
+    if not (N1 < 6 or 23 <= N1) and not (6 < I1) .
+
+    crl [sleep-violation] :
+        Vars { AV "Hour" is N1, CV "Lights" is St1, VarSet }
+        Devs { DevSet } Logs { LogSet }
+    =>
+        Conflict "The lights were on during the night"
+    if (N1 < 6 or 23 < N1) and St1 == on .
+
+
+
+    --- Direct conflict detection 
+
+    rl [direct-conflict] :
+        Vars { VarSet }
+        Devs { DevSet }
+        Logs {
+            Action S1 On at N1,
+            Action S1 Off at N1,
+            LogSet
+        }
+    =>
+        Conflict ("2 contradictory actions happened for " + S1 + " at time " + string(N1,10))
+    .
+    
+
+
+    --- Pass time
+
+    crl [pass-time] :
+        Vars {
+            AV "Time" is N1,
+            AV "Hour" is N2,
+            AV "Temperature" is I1,
+            AV "Luminosity" is I2,
+
+            CV "Air Conditioning" is St1,
+            CV "Heater" is St2,
+            CV "Lights" is St3,
+            CV "ForceLightsOff" is St4
+        }
+        Devs {
+            DevSet
+        }
+        Logs {
+            LogSet
+        }
+    =>
+        Vars {
+            AV "Time" is N1 + 1,
+            AV "Hour" is (N2 + 1) rem 24,
+            AV "Temperature" is newTemp(I1, N2, St1, St2),
+            AV "Luminosity" is if St3 == on then 14 else lightAt(N2 + 1) fi,
+
+            CV "Air Conditioning" is St1,
+            CV "Heater" is St2,
+            CV "Lights" is St3,
+            CV "ForceLightsOff" is St4
+        }
+        Devs {
+            DevSet
+        }
+        Logs {
+            LogSet
+        }
+    if not hasPendingAction((
+        AV "Time" is N1,
+        AV "Hour" is N2,
+        AV "Temperature" is I1,
+        AV "Luminosity" is I2,
+        CV "Air Conditioning" is St1,
+        CV "Heater" is St2,
+        CV "Lights" is St3,
+        CV "ForceLightsOff" is St4)
+    )
+    and not hasConflict(LogSet) 
+    and N1 <= 120 .
+endm
+
+search in CONFIG :
+    Vars {
+        AV "Time" is 0,
+        AV "Hour" is 7,
+        AV "Temperature" is 25,
+        AV "Luminosity" is 13,
+
+        CV "Air Conditioning" is off,
+        CV "Heater" is off,
+        CV "Lights" is off,
+        CV "ForceLightsOff" is off
+    }
+
+    Devs {
+        Sensor "Temp" | event: none, channels: (1),
+        Sensor "Hour" | event: none, channels: (2),
+        Sensor "Luminosity" | event: none, channels: (2),
+
+        Controller "Temp" | action: none, channels: (1),
+        Controller "Lamps" | action: none, channels: (2)
+    }
+
+    Logs {
+        empty
+    }
+    =>*
+    Conflict S:String
+.

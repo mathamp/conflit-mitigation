@@ -26,27 +26,6 @@ fmod CONFIG-HELPER is
     ceq hasPendingAction(
             (AV "Temperature" is I1, CV "Air Conditioning" is St1, CV "Heater" is St2, VarSet)
     ) = true if I1 == 20 and (St1 == on or St2 == on) .
-    --- Temp Cold
-    ceq hasPendingAction(
-            (AV "Temperature" is I1, CV "Heater" is off, VarSet)
-    ) = true if I1 == 15 .
-
-    --- Luminosity Dark
-    ceq hasPendingAction(
-        (AV "Hour" is N1, AV "Luminosity" is I1, CV "Lights" is off, CV "ForceLightsOff" is off, VarSet)
-    ) = true if (I1 == 6) .
-    --- Luminosity Ok
-    ceq hasPendingAction(
-        (AV "Hour" is N1, AV "Luminosity" is I1, CV "Lights" is on, CV "ForceLightsOff" is St1, VarSet)
-    ) = true if (9 == I1) .
-    --- TimeSleep
-    ceq hasPendingAction(
-        (AV "Hour" is N1, AV "Luminosity" is I1, CV "Lights" is St1, CV "ForceLightsOff" is off, VarSet)
-    ) = true if 23 == N1 .
-    --- TimeWake
-    ceq hasPendingAction(
-        (AV "Hour" is N1, AV "Luminosity" is I1, CV "Lights" is off, CV "ForceLightsOff" is on, VarSet)
-    ) = true if N1 == 6 .
 
     eq hasPendingAction(VarSet) = false [owise] .
 
@@ -57,10 +36,10 @@ fmod CONFIG-HELPER is
     eq newTemp(I1, N1, off, on) = I1 + 1 .
 
     op tempAt : Int -> Int .
-    eq tempAt(N1) = rat(floor(10.0 * sin((float(N1) - 6.0) * pi / 12.0)) + 20.0) .
+    eq tempAt(N1) = floor(rat(floor(10.0 * sin((float(N1) - 6.0) * pi / 12.0)) + 20.0)) .
 
     op lightAt : Int -> Int .
-    eq lightAt(N1) = rat(floor(7.5 * sin((float(N1) - 6.0) * pi / 12.0)) + 7.5) .
+    eq lightAt(N1) = floor(rat(floor(7.5 * sin((float(N1) - 6.0) * pi / 12.0)) + 7.5)) .
 
     op moveTowards : Int Int -> Int .
     eq moveTowards(N1,N1) = N1 .
@@ -164,201 +143,6 @@ mod CONFIG is
         }
     if (I1 == 20) and (not ((Event "TempOk" at N1) in LogSet)) and (not (E1 == "TempOk")) .
 
-    crl [temp-cold-event] :
-        Vars {
-            AV "Time" is N1,
-            AV "Temperature" is I1,
-            CV "Heater" is St1,
-            VarSet
-        }
-        Devs {
-            Sensor "Temp" | event: E1, channels: (Ch1, ChSet1),
-            Controller "Temp" | action: A1, channels: (Ch1, ChSet1),
-            DevSet
-        }
-        Logs {
-            LogSet
-        }
-    =>
-        Vars {
-            AV "Time" is N1,
-            AV "Temperature" is I1,
-            CV "Heater" is on,
-            VarSet
-        }
-        Devs {
-            Sensor "Temp" | event: "TempCold", channels: (Ch1, ChSet1),
-            Controller "Temp" | action: "Heater" On, channels: (Ch1, ChSet1),
-            DevSet
-        }
-        Logs {
-            Event "TempCold" at N1,
-            Action "Heater" On at N1,
-            LogSet
-        }
-    if (I1 == 15) and (not ((Event "TempCold" at N1) in LogSet)) and (not (E1 == "TempCold")) .
-
-
-
-    --- Luminosity rules
-
-    crl [luminosity-dark-event] :
-        Vars {
-            AV "Time" is N1,
-            AV "Hour" is N2,
-            AV "Luminosity" is I1,
-            CV "Lights" is St1,
-            CV "ForceLightsOff" is St2,
-            VarSet
-        }
-        Devs {
-            Sensor "Luminosity" | event: E1, channels: (Ch1, ChSet1),
-            Controller "Lamps" | action: A1, channels: (Ch1, ChSet2),
-            DevSet
-        }
-        Logs {
-            LogSet
-        }
-    =>
-        Vars {
-            AV "Time" is N1,
-            AV "Hour" is N2,
-            AV "Luminosity" is I1,
-            CV "Lights" is on,
-            CV "ForceLightsOff" is St2,
-            VarSet
-        }
-        Devs {
-            Sensor "Luminosity" | event: "LuminosityDark", channels: (Ch1, ChSet1),
-            Controller "Lamps" | action: "Lights" On, channels: (Ch1, ChSet2),
-            DevSet
-        }
-        Logs {
-            Event "LuminosityDark" at N1,
-            Action "Lights" On at N1,
-            LogSet
-        }
-    if (I1 == 6) and St2 == off 
-    and (not ((Event "LuminosityDark" at N1) in LogSet)) 
-    and (not (E1 == "LuminosityDark")) .
-
-    crl [luminosity-ok-event] :
-        Vars {
-            AV "Time" is N1,
-            AV "Hour" is N2,
-            AV "Luminosity" is I1,
-            CV "Lights" is St1,
-            CV "ForceLightsOff" is St2,
-            VarSet
-        }
-        Devs {
-            Sensor "Luminosity" | event: E1, channels: (Ch1, ChSet1),
-            Controller "Lamps" | action: A1, channels: (Ch1, ChSet2),
-            DevSet
-        }
-        Logs {
-            LogSet
-        }
-    =>
-        Vars {
-            AV "Time" is N1,
-            AV "Hour" is N2,
-            AV "Luminosity" is I1,
-            CV "Lights" is off,
-            CV "ForceLightsOff" is St2,
-            VarSet
-        }
-        Devs {
-            Sensor "Luminosity" | event: "LuminosityOk", channels: (Ch1, ChSet1),
-            Controller "Lamps" | action: "Lights" Off, channels: (Ch1, ChSet2),
-            DevSet
-        }
-        Logs {
-            Event "LuminosityDark" at N1,
-            Action "Lights" Off at N1,
-            LogSet
-        }
-    if I1 == 9
-    and (not ((Event "LuminosityOk" at N1) in LogSet)) 
-    and (not (E1 == "LuminosityOk")) .
-
-    crl [time-sleep-event] :
-        Vars {
-            AV "Time" is N1,
-            AV "Hour" is N2,
-            CV "Lights" is St1,
-            CV "ForceLightsOff" is St2,
-            VarSet
-        }
-        Devs {
-            Sensor "Luminosity" | event: E1, channels: (Ch1, ChSet1),
-            Controller "Lamps" | action: A1, channels: (Ch1, ChSet2),
-            DevSet
-        }
-        Logs {
-            LogSet
-        }
-    =>
-        Vars {
-            AV "Time" is N1,
-            AV "Hour" is N2,
-            CV "Lights" is off,
-            CV "ForceLightsOff" is on,
-            VarSet
-        }
-        Devs {
-            Sensor "Luminosity" | event: "TimeSleep", channels: (Ch1, ChSet1),
-            Controller "Lamps" | action: "ForceLightsOff" On, channels: (Ch1, ChSet2),
-            DevSet
-        }
-        Logs {
-            Event "TimeSleep" at N1,
-            Action "Lights" Off at N1,
-            Action "ForceLightsOff" On at N1,
-            LogSet
-        }
-    if N2 == 23 
-    and (not ((Event "TimeSleep" at N1) in LogSet)) 
-    and (not (E1 == "TimeSleep")) .
-
-    crl [time-wake-event] :
-        Vars {
-            AV "Time" is N1,
-            AV "Hour" is N2,
-            CV "Lights" is St1,
-            CV "ForceLightsOff" is St2,
-            VarSet
-        }
-        Devs {
-            Sensor "Luminosity" | event: E1, channels: (Ch1, ChSet1),
-            Controller "Lamps" | action: A1, channels: (Ch1, ChSet2),
-            DevSet
-        }
-        Logs {
-            LogSet
-        }
-    =>
-        Vars {
-            AV "Time" is N1,
-            AV "Hour" is N2,
-            CV "Lights" is St1,
-            CV "ForceLightsOff" is off,
-            VarSet
-        }
-        Devs {
-            Sensor "Luminosity" | event: "TimeWake", channels: (Ch1, ChSet1),
-            Controller "Lamps" | action: "ForceLightsOff" Off, channels: (Ch1, ChSet2),
-            DevSet
-        }
-        Logs {
-            Event "TimeWake" at N1,
-            Action "ForceLightsOff" Off at N1,
-            LogSet
-        }
-    if N2 == 6 
-    and (not ((Event "TimeWake" at N1) in LogSet)) 
-    and (not (E1 == "TimeWake")) .
-
 
 
     --- Ambient rules violations
@@ -457,7 +241,7 @@ endm
 search in CONFIG :
     Vars {
         AV "Time" is 0,
-        AV "Hour" is 10,
+        AV "Hour" is 7,
         AV "Temperature" is 20,
         AV "Luminosity" is 13,
 
