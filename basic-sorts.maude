@@ -78,11 +78,11 @@ fmod DEVICE is
     protecting SET{Event} .
     protecting SET{Action} .
 
-    sorts Device Sensor Actuator .
-    subsorts Sensor Actuator < Device .
+    sorts Device Sensor Controller .
+    subsorts Sensor Controller < Device .
 
     op Sensor_|`event:_,channels:_ : String Event Set{Nat} -> Sensor .
-    op Actuator_|`action:_,channels:_ : String Action Set{Nat} -> Sensor .
+    op Controller_|`action:_,channels:_ : String Action Set{Nat} -> Sensor .
 endfm
 
 view Device from TRIV to DEVICE is

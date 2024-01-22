@@ -102,7 +102,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Temp" | event: E1, channels: (Ch1, ChSet1),
-            Actuator "Temp" | action: A1, channels: (Ch1, ChSet1),
+            Controller "Temp" | action: A1, channels: (Ch1, ChSet1),
             DevSet
         }
         Logs {
@@ -117,7 +117,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Temp" | event: "TempHot", channels: (Ch1, ChSet1),
-            Actuator "Temp" | action: "Air Conditioning" On, channels: (Ch1, ChSet1),
+            Controller "Temp" | action: "Air Conditioning" On, channels: (Ch1, ChSet1),
             DevSet
         }
         Logs {
@@ -137,7 +137,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Temp" | event: E1, channels: (Ch1, ChSet1),
-            Actuator "Temp" | action: A1, channels: (Ch1, ChSet1),
+            Controller "Temp" | action: A1, channels: (Ch1, ChSet1),
             DevSet
         }
         Logs {
@@ -153,7 +153,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Temp" | event: "TempOk", channels: (Ch1, ChSet1),
-            Actuator "Temp" | action: opposite(A1), channels: (Ch1, ChSet1),
+            Controller "Temp" | action: opposite(A1), channels: (Ch1, ChSet1),
             DevSet
         }
         Logs {
@@ -173,7 +173,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Temp" | event: E1, channels: (Ch1, ChSet1),
-            Actuator "Temp" | action: A1, channels: (Ch1, ChSet1),
+            Controller "Temp" | action: A1, channels: (Ch1, ChSet1),
             DevSet
         }
         Logs {
@@ -188,7 +188,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Temp" | event: "TempCold", channels: (Ch1, ChSet1),
-            Actuator "Temp" | action: "Heater" On, channels: (Ch1, ChSet1),
+            Controller "Temp" | action: "Heater" On, channels: (Ch1, ChSet1),
             DevSet
         }
         Logs {
@@ -213,7 +213,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Luminosity" | event: E1, channels: (Ch1, ChSet1),
-            Actuator "Lamps" | action: A1, channels: (Ch1, ChSet2),
+            Controller "Lamps" | action: A1, channels: (Ch1, ChSet2),
             DevSet
         }
         Logs {
@@ -230,7 +230,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Luminosity" | event: "LuminosityDark", channels: (Ch1, ChSet1),
-            Actuator "Lamps" | action: "Lights" On, channels: (Ch1, ChSet2),
+            Controller "Lamps" | action: "Lights" On, channels: (Ch1, ChSet2),
             DevSet
         }
         Logs {
@@ -253,7 +253,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Luminosity" | event: E1, channels: (Ch1, ChSet1),
-            Actuator "Lamps" | action: A1, channels: (Ch1, ChSet2),
+            Controller "Lamps" | action: A1, channels: (Ch1, ChSet2),
             DevSet
         }
         Logs {
@@ -270,7 +270,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Luminosity" | event: "LuminosityOk", channels: (Ch1, ChSet1),
-            Actuator "Lamps" | action: "Lights" Off, channels: (Ch1, ChSet2),
+            Controller "Lamps" | action: "Lights" Off, channels: (Ch1, ChSet2),
             DevSet
         }
         Logs {
@@ -292,7 +292,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Luminosity" | event: E1, channels: (Ch1, ChSet1),
-            Actuator "Lamps" | action: A1, channels: (Ch1, ChSet2),
+            Controller "Lamps" | action: A1, channels: (Ch1, ChSet2),
             DevSet
         }
         Logs {
@@ -308,7 +308,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Luminosity" | event: "TimeSleep", channels: (Ch1, ChSet1),
-            Actuator "Lamps" | action: "ForceLightsOff" On, channels: (Ch1, ChSet2),
+            Controller "Lamps" | action: "ForceLightsOff" On, channels: (Ch1, ChSet2),
             DevSet
         }
         Logs {
@@ -331,7 +331,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Luminosity" | event: E1, channels: (Ch1, ChSet1),
-            Actuator "Lamps" | action: A1, channels: (Ch1, ChSet2),
+            Controller "Lamps" | action: A1, channels: (Ch1, ChSet2),
             DevSet
         }
         Logs {
@@ -347,7 +347,7 @@ mod CONFIG is
         }
         Devs {
             Sensor "Luminosity" | event: "TimeWake", channels: (Ch1, ChSet1),
-            Actuator "Lamps" | action: "ForceLightsOff" Off, channels: (Ch1, ChSet2),
+            Controller "Lamps" | action: "ForceLightsOff" Off, channels: (Ch1, ChSet2),
             DevSet
         }
         Logs {
@@ -472,8 +472,8 @@ search in CONFIG :
         Sensor "Hour" | event: none, channels: (2),
         Sensor "Luminosity" | event: none, channels: (2),
 
-        Actuator "Temp" | action: none, channels: (1),
-        Actuator "Lamps" | action: none, channels: (2)
+        Controller "Temp" | action: none, channels: (1),
+        Controller "Lamps" | action: none, channels: (2)
     }
 
     Logs {
