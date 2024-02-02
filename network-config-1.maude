@@ -34,7 +34,7 @@ fmod CONFIG-HELPER is
     --- Luminosity Dark
     ceq hasPendingAction(
         (AV "Hour" is N1, AV "Luminosity" is I1, CV "Lights" is off, CV "ForceLightsOff" is off, VarSet)
-    ) = true if (I1 == 6) .
+    ) = true if (I1 == 7) .
     --- Luminosity Ok
     ceq hasPendingAction(
         (AV "Hour" is N1, AV "Luminosity" is I1, CV "Lights" is on, CV "ForceLightsOff" is St1, VarSet)
@@ -57,10 +57,10 @@ fmod CONFIG-HELPER is
     eq newTemp(I1, N1, off, on) = I1 + 1 .
 
     op tempAt : Int -> Int .
-    eq tempAt(N1) = rat(floor(10.0 * sin((float(N1) - 6.0) * pi / 12.0)) + 20.0) .
+    eq tempAt(N1) = floor(rat(floor(10.0 * sin((float(N1) - 6.0) * pi / 12.0)) + 20.0)) .
 
     op lightAt : Int -> Int .
-    eq lightAt(N1) = rat(floor(7.5 * sin((float(N1) - 6.0) * pi / 12.0)) + 7.5) .
+    eq lightAt(N1) = floor(rat(floor(7.5 * sin((float(N1) - 6.0) * pi / 12.0)) + 7.5)) .
 
     op moveTowards : Int Int -> Int .
     eq moveTowards(N1,N1) = N1 .
@@ -238,7 +238,7 @@ mod CONFIG is
             Action "Lights" On at N1,
             LogSet
         }
-    if (I1 == 6) and St2 == off 
+    if (I1 == 7) and St2 == off 
     and (not ((Event "LuminosityDark" at N1) in LogSet)) 
     and (not (E1 == "LuminosityDark")) .
 
