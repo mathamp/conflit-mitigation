@@ -93,7 +93,11 @@ mod CONFIG is
 
     --- Temperature rules
 
-    crl [temp-hot-event] :
+    op _ : Ambient -> Ambient .
+
+
+    --- Temp Hot Event
+    ceq (
         Vars {
             AV "Time" is N1,
             AV "Temperature" is I1,
@@ -107,8 +111,8 @@ mod CONFIG is
         }
         Logs {
             LogSet
-        }
-    =>
+        })
+    =
         Vars {
             AV "Time" is N1,
             AV "Temperature" is I1,
@@ -127,7 +131,8 @@ mod CONFIG is
         }
     if (25 == I1) and (not ((Event "TempHot" at N1) in LogSet)) and (not (E1 == "TempHot")) .
 
-    crl [temp-ok-event] :
+    --- Temp Ok Event
+    ceq (
         Vars {
             AV "Time" is N1,
             AV "Temperature" is I1,
@@ -142,8 +147,8 @@ mod CONFIG is
         }
         Logs {
             LogSet
-        }
-    =>
+        })
+    =
         Vars {
             AV "Time" is N1,
             AV "Temperature" is I1,
@@ -164,7 +169,8 @@ mod CONFIG is
         }
     if (I1 == 20) and (not ((Event "TempOk" at N1) in LogSet)) and (not (E1 == "TempOk")) .
 
-    crl [temp-cold-event] :
+    --- Temp Cold Event
+    ceq (
         Vars {
             AV "Time" is N1,
             AV "Temperature" is I1,
@@ -178,8 +184,8 @@ mod CONFIG is
         }
         Logs {
             LogSet
-        }
-    =>
+        })
+    =
         Vars {
             AV "Time" is N1,
             AV "Temperature" is I1,
@@ -202,7 +208,8 @@ mod CONFIG is
 
     --- Luminosity rules
 
-    crl [luminosity-dark-event] :
+    --- Luminosity Dark Event
+    ceq (
         Vars {
             AV "Time" is N1,
             AV "Hour" is N2,
@@ -218,8 +225,8 @@ mod CONFIG is
         }
         Logs {
             LogSet
-        }
-    =>
+        })
+    =
         Vars {
             AV "Time" is N1,
             AV "Hour" is N2,
@@ -242,7 +249,8 @@ mod CONFIG is
     and (not ((Event "LuminosityDark" at N1) in LogSet)) 
     and (not (E1 == "LuminosityDark")) .
 
-    crl [luminosity-ok-event] :
+    --- Luminosity Ok Event
+    ceq (
         Vars {
             AV "Time" is N1,
             AV "Hour" is N2,
@@ -258,8 +266,8 @@ mod CONFIG is
         }
         Logs {
             LogSet
-        }
-    =>
+        })
+    =
         Vars {
             AV "Time" is N1,
             AV "Hour" is N2,
@@ -282,7 +290,8 @@ mod CONFIG is
     and (not ((Event "LuminosityOk" at N1) in LogSet)) 
     and (not (E1 == "LuminosityOk")) .
 
-    crl [time-sleep-event] :
+    --- Time Sleep Event
+    ceq (
         Vars {
             AV "Time" is N1,
             AV "Hour" is N2,
@@ -297,8 +306,8 @@ mod CONFIG is
         }
         Logs {
             LogSet
-        }
-    =>
+        })
+    =
         Vars {
             AV "Time" is N1,
             AV "Hour" is N2,
@@ -321,7 +330,8 @@ mod CONFIG is
     and (not ((Event "TimeSleep" at N1) in LogSet)) 
     and (not (E1 == "TimeSleep")) .
 
-    crl [time-wake-event] :
+    --- Time Wake Event
+    ceq (
         Vars {
             AV "Time" is N1,
             AV "Hour" is N2,
@@ -336,8 +346,8 @@ mod CONFIG is
         }
         Logs {
             LogSet
-        }
-    =>
+        })
+    =
         Vars {
             AV "Time" is N1,
             AV "Hour" is N2,
@@ -363,24 +373,27 @@ mod CONFIG is
 
     --- Ambient rules violations
 
-    crl [temp-violation] :
+    --- Temp Violation
+    ceq (
         Vars { AV "Temperature" is I1, VarSet }
-        Devs { DevSet } Logs { LogSet }
-    =>
+        Devs { DevSet } Logs { LogSet })
+    =
         Conflict ("Temperature has reached " + (string(I1, 10)) + "C")
     if not (12 < I1 and I1 < 28) .
 
-    crl [light-violation] :
+    --- Light violation
+    ceq (
         Vars { AV "Luminosity" is I1, AV "Hour" is N1, VarSet }
-        Devs { DevSet } Logs { LogSet }
-    =>
+        Devs { DevSet } Logs { LogSet })
+    =
         Conflict "The room is too dark"
     if not (N1 < 6 or 23 < N1) and not (6 < I1) .
 
-    crl [sleep-violation] :
+    --- Sleep Violation
+    ceq (
         Vars { AV "Hour" is N1, CV "Lights" is St1, VarSet }
-        Devs { DevSet } Logs { LogSet }
-    =>
+        Devs { DevSet } Logs { LogSet })
+    =
         Conflict "The lights were on during the night"
     if (N1 < 6 or 23 < N1) and St1 == on .
 
@@ -388,15 +401,16 @@ mod CONFIG is
 
     --- Direct conflict detection 
 
-    rl [direct-conflict] :
+    --- Direct Conflict
+    eq (
         Vars { VarSet }
         Devs { DevSet }
         Logs {
             Action S1 On at N1,
             Action S1 Off at N1,
             LogSet
-        }
-    =>
+        })
+    =
         Conflict ("2 contradictory actions happened for " + S1 + " at time " + string(N1,10))
     .
     

@@ -61,24 +61,27 @@ mod CONFIG is
 
     --- Ambient rules violations
 
-    crl [temp-violation] :
+    --- Temp Violation
+    ceq (
         Vars { AV "Temperature" is I1, VarSet }
-        Devs { DevSet } Logs { LogSet }
-    =>
+        Devs { DevSet } Logs { LogSet })
+    =
         Conflict ("Temperature has reached " + (string(I1, 10)) + "C")
     if not (12 < I1 and I1 < 28) .
 
-    crl [light-violation] :
+    --- Light violation
+    ceq (
         Vars { AV "Luminosity" is I1, AV "Hour" is N1, VarSet }
-        Devs { DevSet } Logs { LogSet }
-    =>
+        Devs { DevSet } Logs { LogSet })
+    =
         Conflict "The room is too dark"
-    if not (N1 < 6 or 23 <= N1) and not (6 < I1) .
+    if not (N1 < 6 or 23 < N1) and not (6 < I1) .
 
-    crl [sleep-violation] :
+    --- Sleep Violation
+    ceq (
         Vars { AV "Hour" is N1, CV "Lights" is St1, VarSet }
-        Devs { DevSet } Logs { LogSet }
-    =>
+        Devs { DevSet } Logs { LogSet })
+    =
         Conflict "The lights were on during the night"
     if (N1 < 6 or 23 < N1) and St1 == on .
 
@@ -86,15 +89,16 @@ mod CONFIG is
 
     --- Direct conflict detection 
 
-    rl [direct-conflict] :
+    --- Direct Conflict
+    eq (
         Vars { VarSet }
         Devs { DevSet }
         Logs {
             Action S1 On at N1,
             Action S1 Off at N1,
             LogSet
-        }
-    =>
+        })
+    =
         Conflict ("2 contradictory actions happened for " + S1 + " at time " + string(N1,10))
     .
     
